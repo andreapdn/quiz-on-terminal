@@ -7,9 +7,10 @@ import java.util.NoSuchElementException;
 import quiz.Query;
 import quiz.QuizSet;
 import util.Color;
+import quiz.Query.TooManyAnswersException;
 
 public class Ask {
-    public static final String _NAME = "Questions on Terminal";
+    public static final String _NAME = "Quiz on Terminal";
     public static final String _VERSION = "2.0";
 
     private static QuizSet<Query> queries;
@@ -33,27 +34,30 @@ public class Ask {
 
         int l = 0;
         // PARSING DATA
-        // Reading the file with the questions
         try (FileReader fs = new FileReader("questions.txt"); Scanner s = new Scanner(fs)) {
             l++; // Line counting
 
             String topic = "";
+            Query q = null;
             while(s.hasNextLine()) {
                 String line = s.nextLine();
                 final int LENGTH = line.length();
-                boolean proof = false;
 
-                // Checking if the line begins with "P "
-                if (LENGTH >= 3 && line.substring(0, 2).equals("P ")) {
-                    proof = true; // The proof is required
-                    line = line.substring(2);
-                }
-                // Checking if the line begins with "Top "
                 if (LENGTH >= 5 && line.substring(0, 4).equals("Top ")) {
                     topic = line.substring(4);
                     continue;
                 }
-                Query q = new Query(topic, line, proof);
+                if (LENGTH >= 3 && line.substring(0, 2).equals("- ")) { // Incorrect answer
+                    line = line.substring(2);
+                    q.addAnswer(line, false);
+                    continue;
+                }
+                if (LENGTH >= 3 && line.substring(0, 2).equals("+ ")) { // Correct answer
+                    line = line.substring(2);
+                    q.addAnswer(line, true);
+                    continue;
+                }
+                q = new Query(topic, line);
                 queries.add(q);
             }
         } catch (FileNotFoundException e) {
@@ -61,6 +65,9 @@ public class Ask {
             System.exit(1);
         } catch (NoSuchElementException nsee) {
             System.out.println("Nothing found on line " + l + ". Exiting...");
+            System.exit(1);
+        } catch (TooManyAnswersException tmae) {
+            System.out.println("The maximum of answers per question is 26. Remove some answers from line " + l + ".");
             System.exit(1);
         } catch (IOException e) {
             System.out.println("Fatal error... Exit");
@@ -71,7 +78,7 @@ public class Ask {
         Scanner s = new Scanner(System.in);
 
         // GAME STARTS
-        System.out.println("\nWelcome to " + _NAME + "!");
+        System.out.println("\nWelcome to " + _NAME + ", the funniest quiz ever!");
         System.out.println("I will ask you some random questions and you will have to answer correctly.");
         System.out.println("Let's begin!");
 
@@ -84,29 +91,49 @@ public class Ask {
                 System.out.println("Topic: " + Color.makeGreen(q.getTopic()) + "\n");
             System.out.println(q.toString() + "\n");
             
-            System.out.println("When you are done, press y to continue .");
-            System.out.println("Press any other key to exit.");
+            System.out.println("What's the correct answer?");
+            System.out.println("Write exit to end the quiz and see your results.");
 
-            answeredQueries.add(q);
-            
-            if (queries.isEmpty()) {
-                System.out.println("\nHey, hey, hey! Someone told me...");
-                System.out.println(Color.makeYellow("You finished the test! Congratulations"));
-                System.out.println("Press y to restart.");
+            // Answer parsing:
+            do {
+                String answ = null;
+                try { answ = s.next(); } catch (NoSuchElementException e) { continue; }
+                // Exiting if user writes 'exit':
+                if (answ.equals("exit")) printResults();
+                if (answ.length() > 1) {
+                    System.out.println("You can only write one letter.");
+                    continue;
+                }
+                try { q.addUserAnswer(answ.toLowerCase().charAt(0)); } // Adding user answer
+                catch (IndexOutOfBoundsException e) {
+                    System.out.println("Out of range answer. Try again.");
+                    continue;
+                }
+                answeredQueries.add(q); // Adding to answered queries
+                break;
+            } while (true);
 
-                queries = answeredQueries;
-                answeredQueries = new QuizSet<Query>();
-            }
+        } while (!(queries.isEmpty()));
 
-        } while (wantsToPlay(s));
+        System.out.println("\nHey, hey, hey! Someone told me...");
+        System.out.println(Color.makeYellow("You finished the test! Congratulations\n"));
+
+        printResults();
 
         s.close();
     }
-    private static boolean wantsToPlay(Scanner s) {
-        try {
-            return s.next().equals("y");
-        } catch (NoSuchElementException e) {
-            return false;
+
+    private static void printResults() {
+        Object[] answers = answeredQueries.toArray();
+        if (answers.length > 0) System.out.println("\nLet's see what you've done!\n");
+        for (int k = 0; k < answers.length; k++) {
+            Query q = ((Query) answers[k]);
+            String result = q.hasUserAnsweredCorrectly() ?
+                Color.makeGreen("CORRECT") :
+                Color.makeRed("WRONG");
+            System.out.println("Question n " + (k + 1) + " " + result);
+            System.out.println(q.toCorrectionString());
         }
+        System.exit(0);
     }
 }

@@ -1,20 +1,39 @@
-# Questions on Terminal
-Preparing for an oral exam but not sure how to review all the topics?
+# Quiz on Terminal
+Preparing for an exam but not sure how to review all the topics?
 Try this tool!
 
 ## How to use
 1. Install Java.
-2. Download the `questions-on-terminal.jar` file from the releases.
+2. Download the `quiz-on-terminal.jar` file from the releases.
 3. In the same folder as the downloaded file, create a `questions.txt` file.
-4. Populate the text file with a question per line.
-3. Open a terminal and write
+4. Populate the text file with some questions. To format them correctly, read the next paragraph.
+3. Open a terminal and write:
 
-        java -jar questions-on-terminal.jar
+        java -jar quiz-on-terminal.jar
 
 
-### Tricks
-- Put a "P " in front of your question if proof is required.
-- Place "Top " in front of your question to divide your topics in a fashionable way.
+## Format your questions
+Create a `questions.txt` file with your questions and answers.
+It must be formatted this way:
+
+```
+Top Topic
+Question
+- Answer
++ Answer
+- Answer
+- Answer
+Question
++ Answer
+- Answer
+- Answer
+```
+
+- When you want to specify a topic for your questions, just put 'Top ' before your questions
+- To write an answer to a question, simply write it in a next line with the prefix '- '
+- The answer with '+ ' is parsed as the correct answer
+- You can write max 26 answers per question
+- No blank line is permitted
 
 
 ## How to compile

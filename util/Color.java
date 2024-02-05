@@ -23,6 +23,9 @@ public class Color {
         return TEXT_YELLOW + s + TEXT_RESET;
     }
     public static String makeGreen(String s) {
-        return TEXT_GREEN+ s + TEXT_RESET;
+        return TEXT_GREEN + s + TEXT_RESET;
+    }
+    public static String makeRed(String s) {
+        return TEXT_RED + s + TEXT_RESET;
     }
 }
